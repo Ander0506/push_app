@@ -28,6 +28,8 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
 
     on<NotificationStatusChanged>( _notificationsStatusChanged );
 
+    on<NotificationReceived>(_onPushMessageReceived);
+
     // Verificar el estado de las notificaciones
     _initialStatusCheck();
 
@@ -36,26 +38,20 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
 
   }
 
+  // Iniciar la configuración de Firebase Cloud Messaging, revisar el archivo firebase?options.dart
   static Future<void> initializeFCM() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
   }
 
-  void _notificationsStatusChanged( NotificationStatusChanged event, Emitter<NotificationsState> emit ){
-    emit(
-      state.copyWith(
-        status: event.status
-      )
-    );
-    _getFCMToken();
-  }
-
+  // Verificación de si ya se concedieron lois permisos.
   void _initialStatusCheck() async {
     final settings = await messaging.getNotificationSettings();
     add(NotificationStatusChanged( settings.authorizationStatus ));
   }
 
+  // Obtención del Token único del dispositivo
   void _getFCMToken() async {
     if ( state.status != AuthorizationStatus.authorized ) return;
 
@@ -63,6 +59,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     print('Token APP: $token');
   }
 
+  // Gestionador o manejaro de notificaciones
   void _handleRemoteMessage( RemoteMessage message ){
     if ( message.notification == null ) return;
 
@@ -77,14 +74,15 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
         : message.notification!.apple?.imageUrl
     );
 
-    print(notificacion);
-
+    add(NotificationReceived(notificacion));
   }
 
+  // Notificaciones en segundo plano
   void _onForegroundMessage() {
     FirebaseMessaging.onMessage.listen(_handleRemoteMessage);
   }
 
+  // Permisos de dispositivo para notificaciones
   void requestPermission() async{
     NotificationSettings settings = await messaging.requestPermission(
       alert: true,
@@ -98,4 +96,26 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     add(NotificationStatusChanged( settings.authorizationStatus ));
     
   }
+
+  // ---------- EVENTS ----------
+
+  // Evento la notificar el cambio del estado de la notificación
+   void _notificationsStatusChanged( NotificationStatusChanged event, Emitter<NotificationsState> emit ){
+    emit(
+      state.copyWith(
+        status: event.status
+      )
+    );
+    _getFCMToken();
+  }
+
+  // Evento para notificar el cambio de la información de la lista de notificaciones recibidas
+  void _onPushMessageReceived( NotificationReceived event, Emitter<NotificationsState> emit ){
+    emit(
+      state.copyWith(
+        notifications: [ event.notification, ...state.notifications ]
+      )
+    );
+  }
+
 }
