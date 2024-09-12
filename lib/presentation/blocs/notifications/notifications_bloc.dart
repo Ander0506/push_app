@@ -7,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:push_app/domain/entities/push_message.dart';
 import 'package:push_app/firebase_options.dart';
+import 'package:push_app/config/helpers/notification_helper.dart';
 
 part 'notifications_event.dart';
 part 'notifications_state.dart';
@@ -60,11 +61,11 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   }
 
   // Gestionador o manejaro de notificaciones
-  void _handleRemoteMessage( RemoteMessage message ){
+  void handleRemoteMessage( RemoteMessage message ){
     if ( message.notification == null ) return;
 
     final notificacion = PushMessage(
-      messageId: message.messageId?.replaceAll(':', '').replaceAll('%', '') ?? '',
+      messageId: NotificationHelper.getMessageId(message),
       title: message.notification!.title ?? '',
       body: message.notification!.body ?? '',
       sentDate: message.sentTime ?? DateTime.now(),
@@ -79,7 +80,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
 
   // Notificaciones en segundo plano
   void _onForegroundMessage() {
-    FirebaseMessaging.onMessage.listen(_handleRemoteMessage);
+    FirebaseMessaging.onMessage.listen( handleRemoteMessage );
   }
 
   // Permisos de dispositivo para notificaciones

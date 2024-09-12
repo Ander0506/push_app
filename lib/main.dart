@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:push_app/config/router/app_router.dart';
 import 'package:push_app/config/theme/app_theme.dart';
 import 'package:push_app/presentation/blocs/notifications/notifications_bloc.dart';
+import 'package:push_app/presentation/widgets/notifications/handle_notification_interactions.dart';
 
 void main() async{
 
@@ -20,7 +21,7 @@ void main() async{
       child: const MainApp()
     )
   );
-}
+}  
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
@@ -31,6 +32,7 @@ class MainApp extends StatelessWidget {
       routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
       theme: AppTheme().getTheme(),
+      builder: (context, child) => HandleNotificationInteractions(child: child!),
     );
   }
 }
