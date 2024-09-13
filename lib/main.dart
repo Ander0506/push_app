@@ -7,12 +7,20 @@ import 'package:push_app/config/router/app_router.dart';
 import 'package:push_app/config/theme/app_theme.dart';
 import 'package:push_app/presentation/blocs/notifications/notifications_bloc.dart';
 import 'package:push_app/presentation/widgets/notifications/handle_notification_interactions.dart';
+import 'package:push_app/config/local_notifications/local_notidications.dart';
 
 void main() async{
   await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Recibir push notifications en modo bacgraound
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // Inicialización de configuración de push notifications
   await NotificationsBloc.initializeFCM();
+
+  // Inicialización de configuración de local notifications
+  await LocalNotidications.initializeLocalNotifications();
 
   runApp(
     MultiBlocProvider(

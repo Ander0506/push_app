@@ -8,6 +8,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:push_app/domain/entities/push_message.dart';
 import 'package:push_app/firebase_options.dart';
 import 'package:push_app/config/helpers/notification_helper.dart';
+import 'package:push_app/config/local_notifications/local_notidications.dart';
 
 part 'notifications_event.dart';
 part 'notifications_state.dart';
@@ -75,6 +76,13 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
         : message.notification!.apple?.imageUrl
     );
 
+    LocalNotidications.showLocalNotificaion(
+      id: 1,
+      title: notificacion.title,
+      body: notificacion.body,
+      data: notificacion.data.toString()
+    );
+
     add(NotificationReceived(notificacion));
   }
 
@@ -94,6 +102,10 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       provisional: false,
       sound: true,
     );
+
+    // Solicitar permiso a las local notifications
+    await LocalNotidications.requestPermissionLocalNotifications();
+
     add(NotificationStatusChanged( settings.authorizationStatus ));
     
   }
