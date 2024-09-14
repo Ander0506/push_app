@@ -8,7 +8,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:push_app/domain/entities/push_message.dart';
 import 'package:push_app/firebase_options.dart';
 import 'package:push_app/config/helpers/notification_helper.dart';
-import 'package:push_app/config/local_notifications/local_notidications.dart';
 
 part 'notifications_event.dart';
 part 'notifications_state.dart';
@@ -21,12 +20,21 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
 }
 
+typedef CallbackRequestLocalNotification = Future<void> Function()?;
+typedef CallbackShowLocalNotification = void Function({ required int id, String? title, String? body, String? data})?;
 
 class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
 
   FirebaseMessaging messaging = FirebaseMessaging.instance;
+  int pushNumberId = 0;
 
-  NotificationsBloc() : super(const NotificationsState()) {
+  final CallbackRequestLocalNotification requestLocalNotificaionPermissions;
+  final CallbackShowLocalNotification showLocalNotification;
+
+  NotificationsBloc({
+    this.requestLocalNotificaionPermissions,
+    this.showLocalNotification
+  }) : super(const NotificationsState()) {
 
     on<NotificationStatusChanged>( _notificationsStatusChanged );
 
@@ -76,12 +84,21 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
         : message.notification!.apple?.imageUrl
     );
 
-    LocalNotidications.showLocalNotificaion(
-      id: 1,
-      title: notificacion.title,
-      body: notificacion.body,
-      data: notificacion.data.toString()
-    );
+    if ( showLocalNotification != null ) {
+      // se realiza de este modo para quitar las dependencias ocultas de la clase
+      showLocalNotification!(
+        id: ++pushNumberId,
+        title: notificacion.title,
+        body: notificacion.body,
+        data: notificacion.messageId
+      );
+      // LocalNotidications.showLocalNotification(
+      //   id: ++pushNumberId,
+      //   title: notificacion.title,
+      //   body: notificacion.body,
+      //   data: notificacion.data.toString()
+      // );
+    }
 
     add(NotificationReceived(notificacion));
   }
@@ -104,7 +121,11 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     );
 
     // Solicitar permiso a las local notifications
-    await LocalNotidications.requestPermissionLocalNotifications();
+    if ( requestLocalNotificaionPermissions != null){
+      // se realiza de este modo para quitar las dependencias ocultas de la clase
+      await requestLocalNotificaionPermissions!();
+    // await LocalNotidications.requestPermissionLocalNotifications();
+    }
 
     add(NotificationStatusChanged( settings.authorizationStatus ));
     
